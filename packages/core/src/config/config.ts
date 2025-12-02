@@ -259,6 +259,12 @@ export interface ConfigParameters {
   };
   checkpointing?: boolean;
   proxy?: string;
+  httpOptions?: {
+    baseUrl?: string;
+    headers?: Record<string, string>;
+    timeout?: number;
+    apiVersion?: string;
+  };
   cwd: string;
   fileDiscoveryService?: FileDiscoveryService;
   includeDirectories?: string[];
@@ -368,6 +374,14 @@ export class Config {
   private gitService: GitService | undefined = undefined;
   private readonly checkpointing: boolean;
   private readonly proxy: string | undefined;
+  private readonly httpOptions:
+    | {
+        baseUrl?: string;
+        headers?: Record<string, string>;
+        timeout?: number;
+        apiVersion?: string;
+      }
+    | undefined;
   private readonly cwd: string;
   private readonly bugCommand: BugCommandSettings | undefined;
   private model: string;
@@ -493,6 +507,7 @@ export class Config {
     };
     this.checkpointing = params.checkpointing ?? false;
     this.proxy = params.proxy;
+    this.httpOptions = params.httpOptions;
     this.cwd = params.cwd ?? process.cwd();
     this.fileDiscoveryService = params.fileDiscoveryService ?? null;
     this.bugCommand = params.bugCommand;
@@ -1139,6 +1154,17 @@ export class Config {
 
   getProxy(): string | undefined {
     return this.proxy;
+  }
+
+  getHttpOptions():
+    | {
+        baseUrl?: string;
+        headers?: Record<string, string>;
+        timeout?: number;
+        apiVersion?: string;
+      }
+    | undefined {
+    return this.httpOptions;
   }
 
   getWorkingDir(): string {
