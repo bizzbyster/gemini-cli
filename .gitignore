@@ -54,4 +54,7 @@ gha-creds-*.json
 # Log files
 patch_output.log
 
+# Test files with credentials
+test-viasat-api.mjs
+
 .genkit
