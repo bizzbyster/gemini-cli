@@ -58,6 +58,8 @@ export type ContentGeneratorConfig = {
   vertexai?: boolean;
   authType?: AuthType;
   proxy?: string;
+  project?: string;
+  location?: string;
 };
 
 export async function createContentGeneratorConfig(
@@ -68,10 +70,14 @@ export async function createContentGeneratorConfig(
     (await loadApiKey()) || process.env['GEMINI_API_KEY'] || undefined;
   const googleApiKey = process.env['GOOGLE_API_KEY'] || undefined;
   const googleCloudProject =
+    config?.getVertexAIProject() ||
     process.env['GOOGLE_CLOUD_PROJECT'] ||
     process.env['GOOGLE_CLOUD_PROJECT_ID'] ||
     undefined;
-  const googleCloudLocation = process.env['GOOGLE_CLOUD_LOCATION'] || undefined;
+  const googleCloudLocation =
+    config?.getVertexAILocation() ||
+    process.env['GOOGLE_CLOUD_LOCATION'] ||
+    undefined;
 
   const contentGeneratorConfig: ContentGeneratorConfig = {
     authType,
@@ -97,8 +103,16 @@ export async function createContentGeneratorConfig(
     authType === AuthType.USE_VERTEX_AI &&
     (googleApiKey || (googleCloudProject && googleCloudLocation))
   ) {
-    contentGeneratorConfig.apiKey = googleApiKey;
+    // When using project/location, don't set apiKey as a parameter
+    // (API key may be in httpOptions headers for custom proxies)
+    if (googleCloudProject && googleCloudLocation) {
+      contentGeneratorConfig.apiKey = undefined;
+    } else {
+      contentGeneratorConfig.apiKey = googleApiKey;
+    }
     contentGeneratorConfig.vertexai = true;
+    contentGeneratorConfig.project = googleCloudProject;
+    contentGeneratorConfig.location = googleCloudLocation;
 
     return contentGeneratorConfig;
   }
@@ -165,11 +179,22 @@ export async function createContentGenerator(
           'x-gemini-api-privileged-user-id': `${installationId}`,
         };
       }
-      const httpOptions = { headers };
+
+      // Merge custom httpOptions from config
+      const customHttpOptions = gcConfig?.getHttpOptions();
+      const httpOptions = {
+        ...customHttpOptions,
+        headers: {
+          ...customHttpOptions?.headers,
+          ...headers,
+        },
+      };
 
       const googleGenAI = new GoogleGenAI({
         apiKey: config.apiKey === '' ? undefined : config.apiKey,
         vertexai: config.vertexai,
+        project: config.project,
+        location: config.location,
         httpOptions,
       });
       return new LoggingContentGenerator(googleGenAI.models, gcConfig);

@@ -323,10 +323,12 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
     } else {
       result['prompt'] = q;
     }
+    // Clear query since it's been moved to prompt/promptInteractive
+    (result as Record<string, unknown>)['query'] = undefined;
+  } else {
+    // Keep CliArgs.query as a string for downstream typing
+    (result as Record<string, unknown>)['query'] = q || undefined;
   }
-
-  // Keep CliArgs.query as a string for downstream typing
-  (result as Record<string, unknown>)['query'] = q || undefined;
 
   // The import format is now only controlled by settings.memoryImportFormat
   // We no longer accept it as a CLI argument
@@ -621,6 +623,10 @@ export async function loadCliConfig(
       process.env['https_proxy'] ||
       process.env['HTTP_PROXY'] ||
       process.env['http_proxy'],
+    httpOptions: settings.httpOptions,
+    vertexai: settings.vertexai,
+    vertexaiProject: settings.project,
+    vertexaiLocation: settings.location,
     cwd,
     fileDiscoveryService: fileService,
     bugCommand: settings.advanced?.bugCommand,
