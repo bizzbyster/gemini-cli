@@ -52,6 +52,13 @@ If the directory doesn't exist, create it:
 mkdir -p ~/.gemini
 ```
 
+You can copy the example configuration:
+
+```bash
+cp example_settings.json ~/.gemini/settings.json
+# Then edit with your actual credentials
+```
+
 ### Example settings.json (with fake credentials)
 
 ```json
