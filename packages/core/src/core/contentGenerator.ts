@@ -190,13 +190,25 @@ export async function createContentGenerator(
         },
       };
 
+      // Temporarily unset GOOGLE_API_KEY to prevent SDK from reading it
+      // when using project/location (it would conflict with project/location config)
+      const savedGoogleApiKey = process.env['GOOGLE_API_KEY'];
+      if (config.project && config.location && !config.apiKey) {
+        delete process.env['GOOGLE_API_KEY'];
+      }
+
       const googleGenAI = new GoogleGenAI({
-        apiKey: config.apiKey === '' ? undefined : config.apiKey,
+        apiKey: config.apiKey,
         vertexai: config.vertexai,
         project: config.project,
         location: config.location,
         httpOptions,
       });
+
+      // Restore GOOGLE_API_KEY if it was set
+      if (savedGoogleApiKey !== undefined) {
+        process.env['GOOGLE_API_KEY'] = savedGoogleApiKey;
+      }
       return new LoggingContentGenerator(googleGenAI.models, gcConfig);
     }
     throw new Error(
